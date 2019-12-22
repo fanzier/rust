@@ -10,12 +10,17 @@ fn main() {
     assert_eq!((a, b), (1, 0));
     (a, .., b) = (1, 2);
     assert_eq!((a, b), (1, 2));
+<<<<<<< HEAD
     (.., a) = (1, 2);
+=======
+    (_, a) = (1, 2);
+>>>>>>> Implement destructuring assignment (squashed)
     assert_eq!((a, b), (2, 2));
     (..) = (3, 4);
     assert_eq!((a, b), (2, 2));
     (b, ..) = (5, 6, 7);
     assert_eq!(b, 5);
+<<<<<<< HEAD
 
     // Test for a non-Copy type (String):
     let (mut c, mut d);
@@ -34,4 +39,6 @@ fn main() {
     assert_eq!(c, "c");
     ((a, .., b), .., (..)) = ((4, 5), ());
     assert_eq!((a, b), (4, 5));
+=======
+>>>>>>> Implement destructuring assignment (squashed)
 }

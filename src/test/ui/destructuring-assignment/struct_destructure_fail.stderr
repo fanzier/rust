@@ -34,7 +34,11 @@ help: include the missing field in the pattern
    |
 LL |     Struct { a, b, _ } = Struct { a: 1, b: 2 };
    |               ^^^
+<<<<<<< HEAD
 help: if you don't care about this missing field, you can explicitly ignore it
+=======
+help: if you don't care about this missing field, you can explicitely ignore it
+>>>>>>> Implement destructuring assignment (squashed)
    |
 LL |     Struct { a, .., _ } = Struct { a: 1, b: 2 };
    |               ^^^^

@@ -8,8 +8,7 @@ use rustc_data_structures::stack::ensure_sufficient_stack;
 use rustc_data_structures::thin_vec::ThinVec;
 use rustc_errors::struct_span_err;
 use rustc_hir as hir;
-use rustc_hir::def::Res;
-use rustc_session::parse::feature_err;
+use rustc_hir::def::{DefKind, Res};
 use rustc_span::hygiene::ForLoopLoc;
 use rustc_span::source_map::{respan, DesugaringKind, Span, Spanned};
 use rustc_span::symbol::{sym, Ident, Symbol};
@@ -168,9 +167,9 @@ impl<'hir> LoweringContext<'_, 'hir> {
                     self.sess
                         .struct_span_err(
                             e.span,
-                            "in expressions, `_` can only be used on the left-hand side of an assignment",
+                            "expected expression, found reserved identifier `_`",
                         )
-                        .span_label(e.span, "`_` not allowed here")
+                        .span_label(e.span, "expected expression")
                         .emit();
                     hir::ExprKind::Err
                 }
@@ -871,36 +870,44 @@ impl<'hir> LoweringContext<'_, 'hir> {
         whole_span: Span,
     ) -> hir::ExprKind<'hir> {
         // Return early in case of an ordinary assignment.
-        fn is_ordinary(lower_ctx: &mut LoweringContext<'_, '_>, lhs: &Expr) -> bool {
-            match &lhs.kind {
-                ExprKind::Array(..)
-                | ExprKind::Struct(..)
-                | ExprKind::Tup(..)
-                | ExprKind::Underscore => false,
+        let is_ordinary = match &lhs.kind {
+            ExprKind::Array(..)
+            | ExprKind::Struct(..)
+            | ExprKind::Tup(..)
+            | ExprKind::Underscore => false,
+            ExprKind::Call(callee, ..) => {
                 // Check for tuple struct constructor.
-                ExprKind::Call(callee, ..) => lower_ctx.extract_tuple_struct_path(callee).is_none(),
-                ExprKind::Paren(e) => {
-                    match e.kind {
-                        // We special-case `(..)` for consistency with patterns.
-                        ExprKind::Range(None, None, RangeLimits::HalfOpen) => false,
-                        _ => is_ordinary(lower_ctx, e),
+                if let ExprKind::Path(qself, path) = &callee.kind {
+                    let qpath = self.lower_qpath(
+                        callee.id,
+                        qself,
+                        path,
+                        ParamMode::Optional,
+                        ImplTraitContext::disallowed(),
+                    );
+                    match qpath {
+                        hir::QPath::Resolved(
+                            _,
+                            hir::Path { res: Res::Def(DefKind::Ctor(..), _), .. },
+                        ) => false,
+                        _ => true,
                     }
+                } else {
+                    true
                 }
-                _ => true,
             }
-        }
-        if is_ordinary(self, lhs) {
+            // `(..)`.
+            ExprKind::Paren(e) => {
+                if let ExprKind::Range(None, None, RangeLimits::HalfOpen) = e.kind {
+                    false
+                } else {
+                    true
+                }
+            }
+            _ => true,
+        };
+        if is_ordinary {
             return hir::ExprKind::Assign(self.lower_expr(lhs), self.lower_expr(rhs), eq_sign_span);
-        }
-        if !self.sess.features_untracked().destructuring_assignment {
-            feature_err(
-                &self.sess.parse_sess,
-                sym::destructuring_assignment,
-                eq_sign_span,
-                "destructuring assignments are unstable",
-            )
-            .span_label(lhs.span, "cannot assign to this expression")
-            .emit();
         }
 
         let mut assignments = vec![];
@@ -925,26 +932,6 @@ impl<'hir> LoweringContext<'_, 'hir> {
 
         // Wrap everything in a block.
         hir::ExprKind::Block(&self.block_all(whole_span, stmts, None), None)
-    }
-
-    /// If the given expression is a path to a tuple struct, returns that path.
-    /// It is not a complete check, but just tries to reject most paths early
-    /// if they are not tuple structs.
-    /// Type checking will take care of the full validation later.
-    fn extract_tuple_struct_path<'a>(&mut self, expr: &'a Expr) -> Option<&'a Path> {
-        // For tuple struct destructuring, it must be a non-qualified path (like in patterns).
-        if let ExprKind::Path(None, path) = &expr.kind {
-            // Does the path resolves to something disallowed in a tuple struct/variant pattern?
-            if let Some(partial_res) = self.resolver.get_partial_res(expr.id) {
-                if partial_res.unresolved_segments() == 0
-                    && !partial_res.base_res().expected_in_tuple_struct_pat()
-                {
-                    return None;
-                }
-            }
-            return Some(path);
-        }
-        None
     }
 
     /// Convert the LHS of a destructuring assignment to a pattern.
@@ -978,24 +965,31 @@ impl<'hir> LoweringContext<'_, 'hir> {
             }
             // Tuple structs.
             ExprKind::Call(callee, args) => {
-                if let Some(path) = self.extract_tuple_struct_path(callee) {
-                    let (pats, rest) = self.destructure_sequence(
-                        args,
-                        "tuple struct or variant",
-                        eq_sign_span,
-                        assignments,
-                    );
+                if let ExprKind::Path(qself, path) = &callee.kind {
+                    let (pats, rest) =
+                        self.destructure_sequence(args, "tuple struct", eq_sign_span, assignments);
                     let qpath = self.lower_qpath(
                         callee.id,
-                        &None,
+                        qself,
                         path,
                         ParamMode::Optional,
                         ImplTraitContext::disallowed(),
                     );
-                    // Destructure like a tuple struct.
-                    let tuple_struct_pat =
-                        hir::PatKind::TupleStruct(qpath, pats, rest.map(|r| r.0));
-                    return self.pat_without_dbm(lhs.span, tuple_struct_pat);
+                    match qpath {
+                        hir::QPath::Resolved(
+                            _,
+                            hir::Path { res: Res::Def(DefKind::Ctor(..), _), .. },
+                        ) => {
+                            // Destructure like a tuple struct since the path is in fact a constructor.
+                            let tuple_struct_pat =
+                                hir::PatKind::TupleStruct(qpath, pats, rest.map(|r| r.0));
+                            return self.pat_without_dbm(lhs.span, tuple_struct_pat);
+                        }
+                        _ => {
+                            // If the path is not a constructor, lower as an ordinary LHS.
+                            // Typecheck will report an error later.
+                        }
+                    }
                 }
             }
             // Structs.
@@ -1047,13 +1041,11 @@ impl<'hir> LoweringContext<'_, 'hir> {
                 let tuple_pat = hir::PatKind::Tuple(pats, rest.map(|r| r.0));
                 return self.pat_without_dbm(lhs.span, tuple_pat);
             }
+            // `(..)`. We special-case this for consistency with declarations.
             ExprKind::Paren(e) => {
-                // We special-case `(..)` for consistency with patterns.
                 if let ExprKind::Range(None, None, RangeLimits::HalfOpen) = e.kind {
                     let tuple_pat = hir::PatKind::Tuple(&[], Some(0));
                     return self.pat_without_dbm(lhs.span, tuple_pat);
-                } else {
-                    return self.destructure_assign(e, eq_sign_span, assignments);
                 }
             }
             _ => {}

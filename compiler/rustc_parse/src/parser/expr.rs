@@ -1119,6 +1119,9 @@ impl<'a> Parser<'a> {
             } else {
                 self.parse_lit_expr(attrs)
             }
+        } else if self.eat_keyword(kw::Underscore) {
+            self.sess.gated_spans.gate(sym::destructuring_assignment, self.prev_token.span);
+            Ok(self.mk_expr(self.prev_token.span, ExprKind::Underscore, attrs))
         } else {
             self.parse_lit_expr(attrs)
         }
@@ -2106,7 +2109,7 @@ impl<'a> Parser<'a> {
             if self.eat(&token::DotDot) {
                 let exp_span = self.prev_token.span;
                 // We permit `.. }` on the left-hand side of a destructuring assignment.
-                if self.check(&token::CloseDelim(token::Brace)) {
+                if self.token == token::CloseDelim(token::Brace) {
                     self.sess.gated_spans.gate(sym::destructuring_assignment, self.prev_token.span);
                     base = ast::StructRest::Rest(self.prev_token.span.shrink_to_hi());
                     break;

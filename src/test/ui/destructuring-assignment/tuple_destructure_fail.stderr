@@ -1,5 +1,9 @@
 error: `..` can only be used once per tuple pattern
+<<<<<<< HEAD
   --> $DIR/tuple_destructure_fail.rs:7:16
+=======
+  --> $DIR/tuple_destructure_fail.rs:5:16
+>>>>>>> Implement destructuring assignment (squashed)
    |
 LL |     (a, .., b, ..) = (0, 1);
    |         --     ^^ can only be used once per tuple pattern
@@ -7,7 +11,11 @@ LL |     (a, .., b, ..) = (0, 1);
    |         previously used here
 
 error[E0308]: mismatched types
+<<<<<<< HEAD
   --> $DIR/tuple_destructure_fail.rs:8:5
+=======
+  --> $DIR/tuple_destructure_fail.rs:6:5
+>>>>>>> Implement destructuring assignment (squashed)
    |
 LL |     (a, a, b) = (1, 2);
    |     ^^^^^^^^^   ------ this expression has type `({integer}, {integer})`
@@ -17,6 +25,7 @@ LL |     (a, a, b) = (1, 2);
    = note: expected type `({integer}, {integer})`
              found tuple `(_, _, _)`
 
+<<<<<<< HEAD
 error[E0070]: invalid left-hand side of assignment
   --> $DIR/tuple_destructure_fail.rs:9:13
    |
@@ -27,6 +36,10 @@ LL |     (C, ..) = (0,1);
 
 error[E0308]: mismatched types
   --> $DIR/tuple_destructure_fail.rs:10:5
+=======
+error[E0308]: mismatched types
+  --> $DIR/tuple_destructure_fail.rs:7:5
+>>>>>>> Implement destructuring assignment (squashed)
    |
 LL |     (_,) = (1, 2);
    |     ^^^^   ------ this expression has type `({integer}, {integer})`
@@ -36,7 +49,13 @@ LL |     (_,) = (1, 2);
    = note: expected type `({integer}, {integer})`
              found tuple `(_,)`
 
+<<<<<<< HEAD
 error: aborting due to 4 previous errors
 
 Some errors have detailed explanations: E0070, E0308.
 For more information about an error, try `rustc --explain E0070`.
+=======
+error: aborting due to 3 previous errors
+
+For more information about this error, try `rustc --explain E0308`.
+>>>>>>> Implement destructuring assignment (squashed)

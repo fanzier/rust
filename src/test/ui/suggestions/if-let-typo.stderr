@@ -20,6 +20,7 @@ LL |     if Some(x) = foo {}
    = note: see issue #71126 <https://github.com/rust-lang/rust/issues/71126> for more information
    = help: add `#![feature(destructuring_assignment)]` to the crate attributes to enable
 
+<<<<<<< HEAD
 error[E0658]: destructuring assignments are unstable
   --> $DIR/if-let-typo.rs:7:18
    |
@@ -39,16 +40,35 @@ LL |     if Some(3) = foo {}
    |        |
    |        cannot assign to this expression
    |
-   = note: see issue #71126 <https://github.com/rust-lang/rust/issues/71126> for more information
-   = help: add `#![feature(destructuring_assignment)]` to the crate attributes to enable
-
+=======
 error[E0308]: mismatched types
   --> $DIR/if-let-typo.rs:4:8
    |
 LL |     if Some(x) = foo {}
    |        ^^^^^^^^^^^^^ expected `bool`, found `()`
 
+error[E0658]: destructuring assignments are unstable
+  --> $DIR/if-let-typo.rs:7:18
+   |
+LL |     if Some(foo) = bar {}
+   |        --------- ^
+   |        |
+   |        cannot assign to this expression
+   |
+>>>>>>> Implement destructuring assignment (squashed)
+   = note: see issue #71126 <https://github.com/rust-lang/rust/issues/71126> for more information
+   = help: add `#![feature(destructuring_assignment)]` to the crate attributes to enable
+
 error[E0308]: mismatched types
+<<<<<<< HEAD
+  --> $DIR/if-let-typo.rs:4:8
+   |
+LL |     if Some(x) = foo {}
+   |        ^^^^^^^^^^^^^ expected `bool`, found `()`
+
+error[E0308]: mismatched types
+=======
+>>>>>>> Implement destructuring assignment (squashed)
   --> $DIR/if-let-typo.rs:7:8
    |
 LL |     if Some(foo) = bar {}
@@ -65,6 +85,7 @@ help: you might have meant to use pattern matching
 LL |     if let 3 = foo {}
    |        ^^^
 
+<<<<<<< HEAD
 error[E0070]: invalid left-hand side of assignment
   --> $DIR/if-let-typo.rs:10:16
    |
@@ -77,6 +98,31 @@ error[E0308]: mismatched types
   --> $DIR/if-let-typo.rs:10:8
    |
 LL |     if Some(3) = foo {}
+=======
+error[E0658]: destructuring assignments are unstable
+  --> $DIR/if-let-typo.rs:10:16
+   |
+LL |     if Some(3) = foo {}
+   |        ------- ^
+   |        |
+   |        cannot assign to this expression
+   |
+   = note: see issue #71126 <https://github.com/rust-lang/rust/issues/71126> for more information
+   = help: add `#![feature(destructuring_assignment)]` to the crate attributes to enable
+
+error[E0070]: invalid left-hand side of assignment
+  --> $DIR/if-let-typo.rs:10:16
+   |
+LL |     if Some(3) = foo {}
+   |             -  ^
+   |             |
+   |             cannot assign to this expression
+
+error[E0308]: mismatched types
+  --> $DIR/if-let-typo.rs:10:8
+   |
+LL |     if Some(3) = foo {}
+>>>>>>> Implement destructuring assignment (squashed)
    |        ^^^^^^^^^^^^^ expected `bool`, found `()`
 
 error: aborting due to 9 previous errors

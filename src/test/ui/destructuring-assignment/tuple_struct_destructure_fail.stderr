@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 error: `..` can only be used once per tuple struct or variant pattern
   --> $DIR/tuple_struct_destructure_fail.rs:25:27
    |
@@ -16,6 +17,18 @@ LL |     Enum::SingleVariant(a, .., b, ..) = Enum::SingleVariant(0, 1);
 
 error[E0023]: this pattern has 3 fields, but the corresponding tuple struct has 2 fields
   --> $DIR/tuple_struct_destructure_fail.rs:30:5
+=======
+error: `..` can only be used once per tuple struct pattern
+  --> $DIR/tuple_struct_destructure_fail.rs:7:27
+   |
+LL |     TupleStruct(a, .., b, ..) = TupleStruct(0, 1);
+   |                    --     ^^ can only be used once per tuple struct pattern
+   |                    |
+   |                    previously used here
+
+error[E0023]: this pattern has 3 fields, but the corresponding tuple struct has 2 fields
+  --> $DIR/tuple_struct_destructure_fail.rs:9:5
+>>>>>>> Implement destructuring assignment (squashed)
    |
 LL | struct TupleStruct<S, T>(S, T);
    | ------------------------------- tuple struct defined here
@@ -23,6 +36,7 @@ LL | struct TupleStruct<S, T>(S, T);
 LL |     TupleStruct(a, a, b) = TupleStruct(1, 2);
    |     ^^^^^^^^^^^^^^^^^^^^ expected 2 fields, found 3
 
+<<<<<<< HEAD
 error[E0023]: this pattern has 1 field, but the corresponding tuple struct has 2 fields
   --> $DIR/tuple_struct_destructure_fail.rs:32:5
    |
@@ -52,12 +66,17 @@ LL |     Enum::SingleVariant(_) = Enum::SingleVariant(1, 2);
 
 error[E0070]: invalid left-hand side of assignment
   --> $DIR/tuple_struct_destructure_fail.rs:40:12
+=======
+error[E0070]: invalid left-hand side of assignment
+  --> $DIR/tuple_struct_destructure_fail.rs:12:12
+>>>>>>> Implement destructuring assignment (squashed)
    |
 LL |     test() = TupleStruct(0, 0);
    |     ------ ^
    |     |
    |     cannot assign to this expression
 
+<<<<<<< HEAD
 error[E0070]: invalid left-hand side of assignment
   --> $DIR/tuple_struct_destructure_fail.rs:42:14
    |
@@ -75,6 +94,18 @@ LL |     <Alias::<isize> as Test>::test() = TupleStruct(0, 0);
    |     cannot assign to this expression
 
 error: aborting due to 9 previous errors
+=======
+error[E0023]: this pattern has 1 field, but the corresponding tuple struct has 2 fields
+  --> $DIR/tuple_struct_destructure_fail.rs:13:5
+   |
+LL | struct TupleStruct<S, T>(S, T);
+   | ------------------------------- tuple struct defined here
+...
+LL |     TupleStruct(_) = TupleStruct(1, 2);
+   |     ^^^^^^^^^^^^^^ expected 2 fields, found 1
+
+error: aborting due to 4 previous errors
+>>>>>>> Implement destructuring assignment (squashed)
 
 Some errors have detailed explanations: E0023, E0070.
 For more information about an error, try `rustc --explain E0023`.
